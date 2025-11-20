@@ -1,0 +1,29 @@
+---
+- name: Test Ansible Playbook
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Update yum cache
+      ansible.builtin.yum:
+        update_cache: yes
+      when: ansible_os_family == "RedHat"
+
+    - name: Update apk cache (Alpine)
+      ansible.builtin.command:
+        cmd: apk update
+      when: ansible_distribution == "Alpine"
+
+    - name: Create test file
+      ansible.builtin.file:
+        path: /tmp/ansible_test_file.txt
+        state: touch
+
+    - name: Write test content to file
+      ansible.builtin.copy:
+        content: "Ansible playbook run successful\n"
+        dest: /tmp/ansible_test_file.txt
