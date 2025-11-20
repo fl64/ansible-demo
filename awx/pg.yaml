@@ -1,0 +1,22 @@
+apiVersion: managed-services.deckhouse.io/v1alpha1
+kind: Postgres
+metadata:
+  name: awx
+  namespace: awx
+spec:
+  users:
+    - name: awx
+      password: 'secretawx'
+      role: rw
+  databases:
+    - name: "awx"
+  postgresClassName: default
+  instance:
+    memory:
+      size: 4Gi
+    cpu:
+      cores: 2
+      coreFraction: 50
+    persistentVolumeClaim:
+      size: 10Gi
+  type: Standalone

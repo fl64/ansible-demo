@@ -1,21 +1,26 @@
-# Cloud init ansible demo for Deckhouse Virtualization VM
+# Ansible Demo
+
+## Ansible via Cloud-init
+
+Run Ansible playbook during VM initialization using cloud-init.
+
+### Quick Start
 
 ```bash
 # Create VM
 kubectl create -f ./vm
 
-# Connect to VM
-# user / pass = ansible / ansible
+# Connect to VM (user/pass: ansible/ansible)
 d8 v console -n ansible ansible-demo
 
-# Check created via ansible file
+# Verify Ansible execution
 cat /tmp/ansible_test_file.txt
 
-# Remove VM
+# Cleanup
 kubectl delete -f ./vm
 ```
 
-Output example:
+### Expected Output
 
 ```txt
 [   67.344144] cloud-init[1042]: PLAY [Test Ansible Playbook] ***************************************************
@@ -35,4 +40,98 @@ Output example:
 [   67.366009] cloud-init[1042]: localhost                  : ok=4    changed=3    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0
 [   67.368117] cloud-init[1042]: Starting Ansible Pull at 2025-11-20 06:29:48
 [   67.368692] cloud-init[1042]: /usr/bin/ansible-pull --url=https://github.com/fl64/ansible-demo.git test-playbook.yml
+```
+
+## AWX
+
+![AWX Architecture](./awx.png)
+
+### Installation
+
+```bash
+# Install AWX Operator
+kubectl apply -k ./awx-operator
+
+# Install AWX
+kubectl apply -k ./awx
+```
+
+### Setup via Web UI
+
+Create Inventory:
+
+```text
+Resources → Inventories → Add → Add inventory
+Name: vms
+Organization: default
+```
+
+Add Host:
+
+```text
+Resources → Hosts → Add
+Name: 10.66.10.4
+Inventory: vms
+```
+
+Create Credential:
+
+```text
+Resources → Credentials → Add
+Name: vms
+Organization: default
+Credential Type: Machine
+Username: cloud
+SSH Private Key: ...
+```
+
+Add Project:
+
+```text
+Resources → Projects → Add
+Name: https://github.com/fl64/ansible-demo
+Organization: default
+Source Control Type: Git
+Source Control URL: https://github.com/fl64/ansible-demo
+```
+
+Create Job Template:
+
+```text
+Resources → Templates → Add job template
+Name: test
+Inventory: vms
+Credentials: vms
+Project: https://github.com/fl64/ansible-demo
+Playbook: test-playbook-all.yaml
+```
+
+### Create Inventory via API
+
+1. Generate token: Admin → User details → Tokens → Add (Scope: Write)
+
+2. Get inventory ID:
+
+```bash
+curl -sH "Authorization: Bearer YOUR_TOKEN" \
+  -X GET https://awx.example.com/api/v2/inventories/ | \
+  jq '.results[] | select(.name=="vms") | .id'
+```
+
+3. Add hosts:
+
+```bash
+# Single host
+curl -X POST "https://awx.example.com/api/v2/inventories/2/hosts/" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"name": "10.66.10.5"}'
+
+# Multiple hosts from Kubernetes VMs
+for ip in $(kubectl get -A vm -o json | jq '.items[].status.ipAddress' -r); do
+  curl -X POST "https://awx.example.com/api/v2/inventories/2/hosts/" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer YOUR_TOKEN" \
+    -d '{"name": "'${ip}'"}'
+done
 ```
