@@ -1,0 +1,24 @@
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualMachine
+metadata:
+  name: ansible-demo
+  labels:
+    vm: ansible-demo
+spec:
+  virtualMachineClassName: generic
+  runPolicy: AlwaysOn
+  cpu:
+    cores: 1
+    coreFraction: 50%
+  disruptions:
+    restartApprovalMode: Automatic
+  memory:
+    size: 2Gi
+  provisioning:
+    type: UserDataRef
+    userDataRef:
+      kind: Secret
+      name: cloud-init-ansible-demo
+  blockDeviceRefs:
+    - kind: VirtualDisk
+      name: root-disk-ansible-demo

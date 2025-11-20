@@ -1,0 +1,15 @@
+#cloud-config
+users:
+  - name: ansible
+    # openssl passwd -6 "ansible"
+    passwd: $6$EhRnWJOk4Ayu82yu$BLp3flOWlTDqxEAzjeyqqrWT4QES30CxfdAyYMxoQFXMljoGlHcDT7LWXeI4s7cgrqzFqugmz49/ZGiN0X2Tw1
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    chpasswd: {expire: False}
+    lock_passwd: false
+ansible:
+  package_name: ansible-core
+  install_method: distro
+  pull:
+    - url: https://github.com/fl64/ansible-demo.git
+      playbook_names: [test-playbook.yml]
