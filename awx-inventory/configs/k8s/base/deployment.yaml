@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: awx-inventory
+  namespace: awx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: awx-inventory
+  template:
+    metadata:
+      labels:
+        app: awx-inventory
+    spec:
+      serviceAccountName: awx-inventory
+      containers:
+      - name: controller
+        image: fl64/awx-inventory:latest
+        imagePullPolicy: Always
+        envFrom:
+        - secretRef:
+            name: awx-inventory-config

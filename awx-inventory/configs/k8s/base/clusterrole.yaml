@@ -1,0 +1,8 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: awx-inventory
+rules:
+- apiGroups: ["virtualization.deckhouse.io"]
+  resources: ["virtualmachines"]
+  verbs: ["get", "list", "watch"]

@@ -52,11 +52,22 @@ kubectl delete -f ./vm
 # Install AWX Operator
 kubectl apply -k ./awx-operator
 
+# Configure secrets
+vi awx/kustomization.yaml
+
 # Install AWX
 kubectl apply -k ./awx
+
+# get AWX RW token
+
+# Configure secrets
+vi awx-inventory/kustomization.yaml
+
+# Install AWX inventory generator
+kubectl apply -k ./awx-inventory
 ```
 
-### Setup via Web UI
+### Setup AWX via Web UI
 
 Create Inventory:
 

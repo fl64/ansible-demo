@@ -1,15 +1,22 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: awx
+
 resources:
 - awx.yaml
 - cert.yaml
-- pvc-pass.yaml
 - pvc-prj.yaml
 - pg.yaml
 
 secretGenerator:
+- name: awx-admin-password
+  namespace: awx
+  literals:
+  - password=YOUR_AWX_ADMIN_PASSWORD_HERE
+
 - name: awx-postgres-configuration
+  namespace: awx
   literals:
   - host=d8ms-pg-awx-rw
   - port=5432
