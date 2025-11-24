@@ -1,0 +1,12 @@
+---
+- name: Apply DevSec Hardening Collection
+  hosts: all
+  become: true
+  roles:
+    # - role: devsec.hardening.os_hardening
+    - role: devsec.hardening.ssh_hardening
+    # Опциональные роли (раскомментируйте при необходимости)
+    # - role: devsec.hardening.nginx_hardening
+    #   when: nginx_installed | default(false)
+    # - role: devsec.hardening.mysql_hardening
+    #   when: mysql_installed | default(false)

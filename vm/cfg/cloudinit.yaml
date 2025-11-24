@@ -12,4 +12,4 @@ ansible:
   install_method: distro
   pull:
     - url: https://github.com/fl64/ansible-demo.git
-      playbook_names: ["playbooks/test-playbook.yml"]
+      playbook_names: ["demo-project/playbooks/test-playbook.yml"]

@@ -125,7 +125,7 @@ Playbook: test-playbook-all.yaml
 
 ```bash
 curl -sH "Authorization: Bearer YOUR_TOKEN" \
-  -X GET https://awx.example.com/api/v2/inventories/ | \
+  -X GET https://<awx_server>/api/v2/inventories/ | \
   jq '.results[] | select(.name=="vms") | .id'
 ```
 
@@ -133,14 +133,14 @@ curl -sH "Authorization: Bearer YOUR_TOKEN" \
 
 ```bash
 # Single host
-curl -X POST "https://awx.example.com/api/v2/inventories/2/hosts/" \
+curl -X POST "https://<awx_server>/api/v2/inventories/2/hosts/" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{"name": "10.66.10.5"}'
 
 # Multiple hosts from Kubernetes VMs
 for ip in $(kubectl get -A vm -o json | jq '.items[].status.ipAddress' -r); do
-  curl -X POST "https://awx.example.com/api/v2/inventories/2/hosts/" \
+  curl -X POST "https://<awx_server>/api/v2/inventories/2/hosts/" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer YOUR_TOKEN" \
     -d '{"name": "'${ip}'"}'

@@ -28,7 +28,7 @@ spec:
   projects_existing_claim: awx-projects-claim
 
   web_replicas: 1
-  task_replicas: 1
+  # task_replicas: 2
 
   web_resource_requirements: {}
   task_resource_requirements: {}
@@ -37,3 +37,45 @@ spec:
   postgres_resource_requirements: {}
   redis_resource_requirements: {}
   rsyslog_resource_requirements: {}
+
+  task_manage_replicas: true
+
+  # /api/v2/metrics/
+  # metrics_utility_enabled: true
+
+  # extra_settings:
+  #   - setting: ALLOW_METRICS_FOR_ANONYMOUS_USERS
+  #     value: "True"
+
+  # ingress_annotations: |
+  #   nginx.ingress.kubernetes.io/configuration-snippet: |
+  #     if ($request_uri = "/api/v2/metrics") {
+  #       deny all;
+  #       return 403;
+  #     }
+  # web_extra_volume_mounts: |
+  #   - name: awx-static-data
+  #     mountPath: /var/lib/awx/projects
+  # extra_volumes: |
+  #   - name: awx-static-data
+  #     persistentVolumeClaim:
+  #       claimName: awx-static-data
+  # # Добавить init контейнер для инициализации
+  # extra_init_containers: |
+  #   - name: init-projects
+  #     image: busybox:latest
+  #     command:
+  #       - sh
+  #       - -c
+  #       - |
+  #         mkdir -p /data/demo-playbooks
+  #         mkdir -p /data/demo-roles/webserver/tasks
+  #         echo "---
+  #         - name: Demo
+  #           hosts: localhost
+  #           tasks:
+  #             - debug: msg='Hello'" > /data/demo-playbooks/hello.yml
+  #         chmod -R 755 /data
+  #     volumeMounts:
+  #       - name: awx-static-data
+  #         mountPath: /data
