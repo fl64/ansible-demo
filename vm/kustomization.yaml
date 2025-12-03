@@ -5,15 +5,10 @@ namespace: ansible
 
 resources:
   - ./ns.yaml
-  - ./vm.yaml
-  - ./vd-root.yaml
   - ./vi.yaml
+  - ./overlays/vm-01
+  - ./overlays/vm-02
+  # - ./overlays/vm-03
 
-generatorOptions:
-  disableNameSuffixHash: true
-
-secretGenerator:
-  - name: cloud-init-ansible-demo
-    files:
-      - userdata=cfg/cloudinit.yaml
-    type: provisioning.virtualization.deckhouse.io/cloud-init
+configurations:
+- transformer.yaml
