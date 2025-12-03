@@ -1,2 +1,3 @@
 kustomization.yaml
 overlays/
+!vm/overlays
