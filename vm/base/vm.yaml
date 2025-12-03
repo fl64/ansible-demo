@@ -7,7 +7,7 @@ metadata:
   annotations:
     provisioning.virtualization.deckhouse.io/groups: "test,demo"
     provisioning.virtualization.deckhouse.io/ansible_user: "cloud"
-    argocd.argoproj.io/sync-wave: "-1"
+    # argocd.argoproj.io/sync-wave: "-1"
 spec:
   virtualMachineClassName: generic
   runPolicy: AlwaysOn
