@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: ansible
 
 resources:
-  - ./ns.yaml
+  # - ./ns.yaml
   - ./vi.yaml
   - ./overlays/vm-01
   - ./overlays/vm-02
