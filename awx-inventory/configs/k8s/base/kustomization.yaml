@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: awx
+
+resources:
+  - serviceaccount.yaml
+  - clusterrole.yaml
+  - clusterrolebinding.yaml
+  - deployment.yaml
+
+secretGenerator:
+  - name: awx-inventory-config
+    literals:
+      - AWX_URL=https://awx.example.com
+      - AWX_TOKEN=YOUR_AWX_TOKEN_HERE
+      - INVENTORY_PREFIX=
+      - ORGANIZATION=Default
+      - AWX_WAIT_TIMEOUT=300
+      - AWX_WAIT_INTERVAL=5
+    options:
+      labels:
+        app: awx-inventory
