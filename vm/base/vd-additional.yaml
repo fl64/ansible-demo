@@ -4,7 +4,7 @@ kind: VirtualMachineBlockDeviceAttachment
 metadata:
   name: additional
 spec:
-  virtualMachineName: ansible-demo
+  virtualMachineName: demo-vm
   blockDeviceRef:
     kind: VirtualDisk
     name: additional
