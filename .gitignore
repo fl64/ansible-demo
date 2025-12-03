@@ -1,3 +1,2 @@
-kustomization.yaml
-overlays/
-!vm/overlays
+/overlays/
+/argocd/
