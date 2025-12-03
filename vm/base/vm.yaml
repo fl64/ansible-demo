@@ -4,6 +4,9 @@ metadata:
   name: demo-vm
   labels:
     vm: demo-vm
+  annotations:
+    provisioning.virtualization.deckhouse.io/groups: "test,demo"
+    provisioning.virtualization.deckhouse.io/ansible_user: "cloud"
 spec:
   virtualMachineClassName: generic
   runPolicy: AlwaysOn
