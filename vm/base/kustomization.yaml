@@ -11,7 +11,7 @@ generatorOptions:
   disableNameSuffixHash: true
 
 secretGenerator:
-  - name: cloud-init-ansible-demo
+  - name: cloud-init-demo-vm
     files:
       - userdata=cfg/cloudinit.yaml
     type: provisioning.virtualization.deckhouse.io/cloud-init
