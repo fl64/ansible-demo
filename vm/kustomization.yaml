@@ -5,7 +5,7 @@ resources:
   # - ./ns.yaml
   - ./vi.yaml
   - ./overlays/vm-01
-  # - ./overlays/vm-02
+  - ./overlays/vm-02
   # - ./overlays/vm-03
 
 configurations:
