@@ -1,0 +1,96 @@
+---
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  admin_user: {{ .Values.awx.admin.name | default "admin" }}
+  admin_password_secret: {{ printf "%s-admin-password" .Release.Name }}
+
+  ingress_type: ingress
+  ingress_hosts:
+    - hostname: {{ .Values.awx.host | quote }}
+      tls_secret: {{ printf "%s-secret-tls" .Release.Name }}
+
+  postgres_configuration_secret: {{ printf "%s-postgres-configuration" .Release.Name }}
+
+  projects_persistence: true
+  projects_existing_claim: {{ printf "%s-projects-claim" .Release.Name }}
+
+  web_replicas: 1
+  task_manage_replicas: true
+
+  {{- if eq (.Values.awx.storage.accessMode | default "ReadWriteOnce") "ReadWriteOnce" }}
+  # Task affinity for RWO storage — task pod must be on the same node as web pod
+  task_affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - {{ .Release.Name }}-web
+          topologyKey: kubernetes.io/hostname
+  {{- end }}
+
+  {{- if .Values.dex.enabled }}
+  extra_settings_files:
+    configmaps:
+      - name: {{ printf "%s-oidc-settings" .Release.Name }}
+        key: oidc-settings.py
+  {{- end }}
+
+  extra_settings:
+    - setting: AUTH_LDAP_ENABLED
+      value: "False"
+    - setting: DISABLE_LOCAL_AUTH
+      value: "False"
+  {{- if .Values.dex.enabled }}
+    - setting: SOCIAL_AUTH_OIDC_KEY
+      value: {{ printf "'dex-client-%s@%s'" .Release.Name .Release.Namespace | quote }}
+    - setting: SOCIAL_AUTH_OIDC_SECRET
+      value:
+        secretKeyRef:
+          name: {{ printf "dex-client-%s" .Release.Name }}
+          key: clientSecret
+    - setting: SOCIAL_AUTH_OIDC_OIDC_ENDPOINT
+      value: {{ printf "'https://dex.%s'" (trimPrefix "awx." .Values.awx.host) | quote }}
+    - setting: SOCIAL_AUTH_OIDC_ID_KEY
+      value: {{ printf "'%s'" (.Values.dex.oidc.idKey | default "preferred_username") | quote }}
+    - setting: SOCIAL_AUTH_OIDC_USERNAME_KEY
+      value: {{ printf "'%s'" (.Values.dex.oidc.usernameKey | default "preferred_username") | quote }}
+    - setting: SOCIAL_AUTH_OIDC_EMAIL_KEY
+      value: {{ printf "'%s'" (.Values.dex.oidc.emailKey | default "email") | quote }}
+    - setting: SOCIAL_AUTH_OIDC_ORGANIZATION_MAP
+      value: {{ .Values.dex.oidc.orgMap | quote }}
+  {{- end }}
+
+  {{- if .Values.dex.enabled }}
+  web_extra_env: |
+    - name: SOCIAL_AUTH_OIDC_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: {{ printf "dex-client-%s" .Release.Name }}
+          key: clientSecret
+    - name: AWX_HOST
+      value: {{ .Values.awx.host | quote }}
+
+  task_extra_env: |
+    - name: SOCIAL_AUTH_OIDC_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: {{ printf "dex-client-%s" .Release.Name }}
+          key: clientSecret
+    - name: AWX_HOST
+      value: {{ .Values.awx.host | quote }}
+  {{- end }}
+
+  web_resource_requirements: {}
+  task_resource_requirements: {}
+  ee_resource_requirements: {}
+  init_container_resource_requirements: {}
+  postgres_resource_requirements: {}
+  redis_resource_requirements: {}
+  rsyslog_resource_requirements: {}

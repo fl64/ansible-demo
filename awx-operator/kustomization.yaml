@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - https://github.com/ansible/awx-operator/config/default?ref=2.19.1
+  - cluster-rbac.yaml
+
+# Namespace for the operator itself
+namespace: awx
+
+images:
+  - name: gcr.io/kubebuilder/kube-rbac-proxy
+    newName: registry.k8s.io/kubebuilder/kube-rbac-proxy
+    newTag: v0.16.0
+
+patches:
+  # WATCH_NAMESPACE in upstream uses valueFrom (fieldRef: metadata.namespace),
+  # strategic merge won't remove valueFrom, so we use JSON patch to replace the entire env entry
+  - patch: |
+      - op: replace
+        path: /spec/template/spec/containers/1/env/2
+        value:
+          name: WATCH_NAMESPACE
+          value: ""
+    target:
+      kind: Deployment
+      name: awx-operator-controller-manager

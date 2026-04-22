@@ -1,0 +1,70 @@
+version: '3'
+
+vars:
+  AWX_OPERATOR_VERSION: "2.19.1"
+  AWX_INSTANCE_NS: awx-instance
+  AWX_INSTANCE_VALUES: my-values.yaml
+  VM_NS: ansible-demo
+  TMP_DIR: ./tmp
+  SSH_DIR: "{{ .TMP_DIR }}/ssh"
+  SSH_FILE_NAME: awx
+  SSH_PUB_KEY_FILE: "{{ .SSH_DIR }}/{{ .SSH_FILE_NAME }}.pub"
+  SSH_PRIV_KEY_FILE: "{{ .SSH_DIR }}/{{ .SSH_FILE_NAME }}"
+
+tasks:
+  awx-operator:install:
+    desc: Install AWX Operator via local kustomize overlay
+    cmds:
+      - kubectl apply -k ./awx-operator
+
+  awx-operator:uninstall:
+    desc: Uninstall AWX Operator
+    cmds:
+      - kubectl delete -k ./awx-operator || true
+
+  ssh-gen:
+    desc: Generate SSH keypair for AWX credentials
+    cmds:
+      - mkdir -p "{{ .SSH_DIR }}"
+      - yes | ssh-keygen -t ed25519 -b 1024 -f {{ .SSH_PRIV_KEY_FILE }} -N "" -C "awx" -v
+      - chmod 0600 "{{ .SSH_PRIV_KEY_FILE }}"
+      - chmod 0400 "{{ .SSH_PRIV_KEY_FILE }}"
+    status:
+      - test -f "{{ .SSH_PRIV_KEY_FILE }}"
+
+  ssh-update-cloudinit:
+    deps:
+      - ssh-gen
+    desc: Update SSH key in cloud-init config
+    cmds:
+      - |
+        SSH_PUB_KEY=$(cat {{ .SSH_PUB_KEY_FILE }})
+        sed -i "s|ssh-ed25519 [A-Za-z0-9+/]\{1,\}[= ].*|${SSH_PUB_KEY}|g" ./vm/base/cfg/cloudinit.yaml
+
+  vm:deploy:
+    deps:
+      - ssh-update-cloudinit
+    desc: Deploy VMs with cloud-init
+    cmds:
+      - kubectl apply -k ./vm
+      - kubectl -n {{ .VM_NS }} get vm -o name | xargs kubectl -n {{ .VM_NS }} wait --for='jsonpath={.status.phase}=Running' --timeout=300s
+
+  vm:undeploy:
+    desc: Delete VMs
+    cmds:
+      - kubectl delete -k ./vm || true
+
+  vm:ssh:
+    desc: SSH to VM (use VM_NAME=demo-vm-01 to specify)
+    cmds:
+      - d8 v ssh --local-ssh --namespace={{ .VM_NS }} --username=ansible --identity-file={{ .SSH_PRIV_KEY_FILE }} --local-ssh-opts="-o StrictHostKeyChecking=no" {{ .VM_NAME | default "demo-vm-01" }}
+
+  install:
+    desc: Install/Upgrade AWX Helm chart
+    cmds:
+      - helm upgrade --install {{.AWX_INSTANCE_NS}} charts/awx-instance -n {{.AWX_INSTANCE_NS}} --create-namespace -f charts/awx-instance/values.yaml -f {{.AWX_INSTANCE_VALUES}}
+
+  uninstall:
+    desc: Uninstall AWX Helm chart
+    cmds:
+      - helm uninstall {{.AWX_INSTANCE_NS}} -n {{.AWX_INSTANCE_NS}} || true

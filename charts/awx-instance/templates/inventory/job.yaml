@@ -1,0 +1,102 @@
+{{- if .Values.inventory.enabled -}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-inventory-bootstrap" .Release.Name }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ printf "%s-inventory" .Release.Name }}
+      containers:
+      - name: create-token
+        image: fl64/prober:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -e
+
+            AWX_URL="http://{{ .Release.Name }}-service.{{ .Release.Namespace }}"
+            NAMESPACE="{{ .Release.Namespace }}"
+
+            if kubectl get secret {{ .Release.Name }}-inventory-config -n $NAMESPACE >/dev/null 2>&1; then
+              echo "Secret already exists, skipping..."
+              exit 0
+            fi
+
+            log() {
+              echo "$(date '+%Y-%m-%d %H:%M:%S') $*"
+            }
+
+            get_condition_status() {
+              local condition="$1"
+              kubectl get awx {{ .Release.Name }} -n $NAMESPACE -o jsonpath="{.status.conditions[?(@.type==\"$condition\")].status}" 2>/dev/null
+            }
+
+            is_awx_running() {
+              [ "$(get_condition_status Running)" = "True" ]
+            }
+
+            is_awx_failed() {
+              [ "$(get_condition_status Successful)" = "False" ]
+            }
+
+            log "Waiting for AWX CR to be Ready..."
+            counter=0
+            while true; do
+              counter=$((counter + 1))
+              if is_awx_running && ! is_awx_failed; then
+                break
+              fi
+              log "[${counter}] AWX not ready, waiting..."
+              sleep 2
+            done
+            log "AWX CR is Running"
+
+            log "Waiting for AWX API..."
+            counter=0
+            until curl -sf "${AWX_URL}/api/v2/" > /dev/null 2>&1; do
+              counter=$((counter + 1))
+              log "[API ${counter}] AWX not ready, waiting..."
+              sleep 2
+            done
+            log "AWX API is ready"
+
+            log "Creating OAuth2 token..."
+            TOKEN=$(curl -s -X POST "${AWX_URL}/api/v2/tokens/" \
+              -H "Content-Type: application/json" \
+              -u admin:${ADMIN_PASSWORD} \
+              -d '{"description": "auto-generated-for-inventory", "scope": "write"}' | jq -r '.token')
+
+            if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+              log "Failed to create token!"
+              exit 1
+            fi
+
+            log "Token created successfully"
+            log "Token: $TOKEN"
+
+            kubectl create secret generic {{ .Release.Name }}-inventory-config \
+              -n $NAMESPACE \
+              --from-literal=AWX_URL="http://{{ .Release.Name }}-service" \
+              --from-literal=AWX_TOKEN="$TOKEN" \
+              --from-literal=INVENTORY_PREFIX="" \
+              --from-literal=ORGANIZATION=Default \
+              --from-literal=AWX_WAIT_TIMEOUT=300 \
+              --from-literal=AWX_WAIT_INTERVAL=5 \
+              --dry-run=client -o yaml | kubectl apply -f -
+
+            echo "Secret updated with token"
+        env:
+          - name: ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ printf "%s-admin-password" .Release.Name }}
+                key: password
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+      restartPolicy: OnFailure
+  backoffLimit: 10
+{{- end }}

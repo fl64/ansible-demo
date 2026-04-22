@@ -1,0 +1,32 @@
+version: '3'
+
+vars:
+  IMAGE_NAME: fl64/awx-inventory
+  IMAGE_TAG: latest
+
+tasks:
+  build:
+    desc: Build Docker image
+    cmds:
+      - docker build -t {{.IMAGE_NAME}}:{{.IMAGE_TAG}} .
+
+  push:
+    desc: Push Docker image to registry
+    cmds:
+      - docker push {{.IMAGE_NAME}}:{{.IMAGE_TAG}}
+
+  build-push:
+    desc: Build and push Docker image
+    deps: [build]
+    cmds:
+      - task: push
+
+  deploy:
+    desc: Deploy to Kubernetes
+    cmds:
+      - kubectl apply -k ./configs/k8s
+
+  undeploy:
+    desc: Undeploy from Kubernetes
+    cmds:
+      - kubectl delete -k ./configs/k8s

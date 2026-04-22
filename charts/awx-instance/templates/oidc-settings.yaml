@@ -1,0 +1,26 @@
+{{- if .Values.dex.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-oidc-settings" .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+data:
+  oidc-settings.py: |
+    # Auto-configure OIDC settings from environment and Kubernetes metadata
+    import os
+
+    SOCIAL_AUTH_OIDC_SECRET = os.environ.get('SOCIAL_AUTH_OIDC_SECRET', '')
+
+    try:
+        with open('/var/run/secrets/kubernetes.io/serviceaccount/namespace') as f:
+            _namespace = f.read().strip()
+    except FileNotFoundError:
+        _namespace = 'awx'
+    SOCIAL_AUTH_OIDC_KEY = f'dex-client-{{ .Release.Name }}@{_namespace}'
+
+    _awx_host = os.environ.get('AWX_HOST', '')
+    if _awx_host:
+        _base_domain = _awx_host.split('.', 1)[1] if '.' in _awx_host else _awx_host
+        SOCIAL_AUTH_OIDC_OIDC_ENDPOINT = f'https://dex.{_base_domain}'
+{{- end }}

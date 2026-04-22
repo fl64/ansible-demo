@@ -1,0 +1,10 @@
+awx:
+  host: awx.example.dev
+  admin:
+    password: lolkekawx
+
+db:
+  password: lolkekdb
+
+dex:
+  enabled: true

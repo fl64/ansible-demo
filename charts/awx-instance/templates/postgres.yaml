@@ -1,0 +1,23 @@
+---
+apiVersion: managed-services.deckhouse.io/v1alpha1
+kind: Postgres
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  users:
+    - name: awx
+      password: {{ .Values.db.password | quote }}
+      role: rw
+  databases:
+    - name: "awx"
+  postgresClassName: {{ .Values.db.class | quote }}
+  instance:
+    memory:
+      size: {{ .Values.db.memory | quote }}
+    cpu:
+      cores: {{ .Values.db.cpu.cores }}
+      coreFraction: {{ .Values.db.cpu.fraction }}
+    persistentVolumeClaim:
+      size: {{ .Values.db.storage | quote }}
+  type: {{ .Values.db.type | quote }}

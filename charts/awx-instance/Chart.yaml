@@ -1,0 +1,6 @@
+apiVersion: v2
+name: awx
+description: AWX Helm Chart
+type: application
+version: 0.1.0
+appVersion: "2.19.1"

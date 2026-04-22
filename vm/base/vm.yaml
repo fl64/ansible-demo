@@ -1,24 +1,28 @@
 apiVersion: virtualization.deckhouse.io/v1alpha2
 kind: VirtualMachine
 metadata:
-  name: ansible-demo
+  name: demo-vm
   labels:
-    vm: ansible-demo
+    vm: demo-vm
+  annotations:
+    provisioning.virtualization.deckhouse.io/groups: "test,demo"
+    provisioning.virtualization.deckhouse.io/ansible_user: "cloud"
+    # argocd.argoproj.io/sync-wave: "-1"
 spec:
   virtualMachineClassName: generic
   runPolicy: AlwaysOn
   cpu:
     cores: 1
-    coreFraction: 50%
+    coreFraction: 10%
   disruptions:
     restartApprovalMode: Automatic
   memory:
-    size: 2Gi
+    size: 512Mi
   provisioning:
     type: UserDataRef
     userDataRef:
       kind: Secret
-      name: cloud-init-ansible-demo
+      name: cloud-init-demo-vm
   blockDeviceRefs:
     - kind: VirtualDisk
-      name: root-disk-ansible-demo
+      name: root-disk-demo-vm

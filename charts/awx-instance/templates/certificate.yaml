@@ -1,0 +1,16 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  certificateOwnerRef: false
+  dnsNames:
+    - {{ .Values.awx.host }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
+  secretName: {{ printf "%s-secret-tls" .Release.Name }}
+  privateKey:
+    rotationPolicy: Never

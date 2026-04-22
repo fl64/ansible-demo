@@ -1,0 +1,15 @@
+{{- if .Values.dex.enabled }}
+---
+apiVersion: deckhouse.io/v1
+kind: DexAuthenticator
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  applicationDomain: {{ .Values.awx.host | quote }}
+  applicationIngressClassName: {{ .Values.dex.ingressClass | default "nginx" | quote }}
+  applicationIngressCertificateSecretName: {{ printf "%s-secret-tls" .Release.Name }}
+  sendAuthorizationHeader: false
+  keepUsersLoggedInFor: {{ .Values.dex.sessionTTL | default "5m" | quote }}
+  highAvailability: false
+{{- end }}

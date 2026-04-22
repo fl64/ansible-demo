@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ printf "%s-projects-claim" .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - {{ .Values.awx.storage.accessMode | default "ReadWriteOnce" }}
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ .Values.awx.storage.size | default "2Gi" | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ printf "%s-static-data" .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - {{ .Values.awx.storage.accessMode | default "ReadWriteOnce" }}
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: {{ .Values.awx.storage.size | default "2Gi" | quote }}

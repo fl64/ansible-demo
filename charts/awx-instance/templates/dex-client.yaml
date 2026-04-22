@@ -1,0 +1,11 @@
+{{- if .Values.dex.enabled }}
+---
+apiVersion: deckhouse.io/v1
+kind: DexClient
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  redirectURIs:
+    - {{ printf "https://%s/sso/complete/oidc/" .Values.awx.host }}
+{{- end }}

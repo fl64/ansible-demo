@@ -1,0 +1,48 @@
+awx:
+  host: awx.example.com
+  admin:
+    name: admin
+    password: ""
+  storage:
+    accessMode: ReadWriteOnce
+    size: 2Gi
+
+dex:
+  enabled: true
+  ingressClass: nginx
+  sessionTTL: 5m
+  oidc:
+    idKey: preferred_username
+    usernameKey: email
+    emailKey: email
+    # Python syntax! Use True/False (capitalized), otherwise SyntaxError in AWX
+    # Maps OIDC token groups to AWX organizations and roles.
+    # Format: {'OrganizationName': {'role': True/False/'group_name', ...}}
+    # - OrganizationName: AWX organization name (created automatically if doesn't exist)
+    # - role: 'admins' (administrators), 'users' (regular users), 'auditors' (auditors)
+    # - True: all OIDC users will get this role regardless of group membership
+    # - False: all OIDC users will NOT get this role
+    # - 'group_name': only users from the specified OIDC group will get this role
+    #
+    # Examples:
+    # - All users in Default org: "{'Default': {'admins': True, 'users': True}}"
+    # - Only 'awx-admins' group gets admin: "{'Default': {'admins': 'awx-admins', 'users': True}}"
+    # - Multiple organizations: "{'Dev': {'users': True}, 'Prod': {'admins': 'prod-admins', 'users': True}}"
+    orgMap: "{'Default': {'admins': True, 'users': True}}"
+
+db:
+  password: ""
+  class: default
+  type: Standalone
+  cpu:
+    cores: 2
+    fraction: 50
+  memory: 4Gi
+  storage: 10Gi
+
+inventory:
+  enabled: true
+  image: fl64/awx-inventory:latest
+  discovery:
+    scope: Cluster
+    namespaces: []

@@ -1,0 +1,18 @@
+---
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualMachineBlockDeviceAttachment
+metadata:
+  name: additional
+spec:
+  virtualMachineName: demo-vm
+  blockDeviceRef:
+    kind: VirtualDisk
+    name: additional
+---
+apiVersion: virtualization.deckhouse.io/v1alpha2
+kind: VirtualDisk
+metadata:
+  name: additional
+spec:
+  persistentVolumeClaim:
+    size: 1Gi

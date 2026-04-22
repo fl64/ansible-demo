@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "%s-inventory" .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ printf "%s-inventory" .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ printf "%s-inventory" .Release.Name }}
+    spec:
+      serviceAccountName: {{ printf "%s-inventory" .Release.Name }}
+      containers:
+      - name: controller
+        image: {{ .Values.inventory.image | quote }}
+        imagePullPolicy: Always
+        env:
+        - name: AWX_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-inventory-config" .Release.Name }}
+              key: AWX_URL
+        - name: AWX_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-inventory-config" .Release.Name }}
+              key: AWX_TOKEN
+        - name: ORGANIZATION
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-inventory-config" .Release.Name }}
+              key: ORGANIZATION
+        - name: INVENTORY_PREFIX
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-inventory-config" .Release.Name }}
+              key: INVENTORY_PREFIX
+        - name: AWX_WAIT_TIMEOUT
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-inventory-config" .Release.Name }}
+              key: AWX_WAIT_TIMEOUT
+        - name: AWX_WAIT_INTERVAL
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-inventory-config" .Release.Name }}
+              key: AWX_WAIT_INTERVAL
+        {{- $targetNamespace := "" }}
+        {{- if eq .Values.inventory.discovery.scope "Namespace" }}
+        {{- $targetNamespace = "metadata.namespace" }}
+        {{- else if and (eq .Values.inventory.discovery.scope "Custom") .Values.inventory.discovery.namespaces }}
+        {{- $targetNamespace = (index .Values.inventory.discovery.namespaces 0) }}
+        {{- end }}
+        {{- if $targetNamespace }}
+        - name: NAMESPACE
+          {{- if eq $targetNamespace "metadata.namespace" }}
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+          {{- else }}
+          value: {{ $targetNamespace | quote }}
+          {{- end }}
+        {{- end }}
