@@ -26,30 +26,40 @@ const (
 
 // Controller manages the inventory updater
 type Controller struct {
-	awxClient    *awx.Client
-	k8sClient    *kubernetes.Client
+	awxClient    AWXClientInterface
+	k8sClient    KubernetesClientInterface
 	organization string
 	prefix       string
 	// Cache of inventory IDs by namespace
 	inventoryCache map[string]int
 }
 
-// New creates a new controller
+// New creates a new controller with real clients
 func New(awxURL, awxToken, prefix, organization, namespace string) (*Controller, error) {
 	awxClient := awx.NewClient(awxURL, awxToken)
-
 	k8sClient, err := kubernetes.NewClient(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
 	return &Controller{
-		awxClient:      awxClient,
+		awxClient:      NewAWXClientAdapter(awxClient),
 		k8sClient:      k8sClient,
 		organization:   organization,
 		prefix:         prefix,
 		inventoryCache: make(map[string]int),
 	}, nil
+}
+
+// NewWithClients creates a new controller with provided clients (for testing)
+func NewWithClients(awxClient AWXClientInterface, k8sClient KubernetesClientInterface, organization, prefix string) *Controller {
+	return &Controller{
+		awxClient:      awxClient,
+		k8sClient:      k8sClient,
+		organization:   organization,
+		prefix:         prefix,
+		inventoryCache: make(map[string]int),
+	}
 }
 
 // getDurationFromEnv parses duration from environment variable with fallback
@@ -330,8 +340,8 @@ func extractHostVMInfo(variables string) (namespace, name string) {
 	if ns, ok := vars["vm_namespace"].(string); ok {
 		namespace = ns
 	}
-	if name, ok := vars["vm_name"].(string); ok {
-		name = name
+	if n, ok := vars["vm_name"].(string); ok {
+		name = n
 	}
 
 	return namespace, name

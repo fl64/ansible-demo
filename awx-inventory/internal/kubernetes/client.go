@@ -124,6 +124,12 @@ func (k *Client) GetVM(namespace, name string) (*VirtualMachine, error) {
 
 // UnstructuredToVM converts unstructured.Unstructured to VirtualMachine
 func UnstructuredToVM(obj *unstructured.Unstructured) *VirtualMachine {
+	if obj == nil || obj.Object == nil {
+		return &VirtualMachine{
+			Labels: make(map[string]string),
+		}
+	}
+
 	namespace, found, _ := unstructured.NestedString(obj.Object, "metadata", "namespace")
 	if !found {
 		namespace = ""

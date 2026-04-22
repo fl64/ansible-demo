@@ -30,3 +30,23 @@ tasks:
     desc: Undeploy from Kubernetes
     cmds:
       - kubectl delete -k ./configs/k8s
+
+  test:
+    desc: Run all tests
+    cmds:
+      - go test -v ./...
+
+  test-cover:
+    desc: Run all tests with coverage
+    cmds:
+      - go test -v -cover ./...
+
+  test-sync:
+    desc: Run syncInventories integration tests
+    cmds:
+      - go test -v -run "Sync" ./...
+
+  test-unit:
+    desc: Run unit tests only (no integration)
+    cmds:
+      - go test -v ./internal/awx/... ./internal/kubernetes/...
