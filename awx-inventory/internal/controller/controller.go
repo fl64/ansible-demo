@@ -159,13 +159,18 @@ func (c *Controller) handleVMAdded(vm *kubernetes.VirtualMachine) error {
 		"ansible_host": vm.IP,
 	}
 
-	return retryWithBackoff(func() error {
+	err := retryWithBackoff(func() error {
 		invID, err := c.getOrCreateInventoryForNamespace(vm.Namespace)
 		if err != nil {
 			return err
 		}
 		return c.awxClient.CreateOrUpdateHost(invID, vm.Name, hostVars)
 	}, fmt.Sprintf("create/update host '%s' in namespace '%s'", vm.Name, vm.Namespace))
+
+	if err == nil {
+		log.Printf("Host '%s' synced (ansible_host=%s)", vm.Name, vm.IP)
+	}
+	return err
 }
 
 // handleVMDeleted handles DELETED events
@@ -228,7 +233,11 @@ func (c *Controller) handleWatchEvent(event watch.Event, obj *unstructured.Unstr
 		}
 
 	case watch.Deleted:
+		log.Printf("Event: DELETED for VM '%s' in namespace '%s'", name, namespace)
 		err = c.handleVMDeleted(namespace, name)
+		if err == nil {
+			log.Printf("Host '%s' removed from inventory", name)
+		}
 
 	default:
 		log.Printf("WARN: Unknown event type: %s", event.Type)
@@ -320,6 +329,8 @@ func (c *Controller) syncInventories() error {
 		}
 		if removedCount > 0 {
 			log.Printf("Sync: removed %d stale host(s) from inventory '%s'", removedCount, ns)
+		} else {
+			log.Printf("Sync: inventory '%s' is clean (%d hosts)", ns, len(awxHosts))
 		}
 	}
 
